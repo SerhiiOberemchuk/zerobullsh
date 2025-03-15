@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="custom-html-36">
+      <section class="mbr-section form-section" id="sezione-calcolo-premio">
+        <section class="container">
+          <div class="row justify-content-center">
+            <div class="col-lg-8">
+              <div class="card shadow-sm p-4">
+                <h2 class="card-title text-center mb-4">
+                  Calcola il tuo premio assicurativo
+                </h2>
+
+                <form id="form-calcolo-premio">
+                  <!-- Data di nascita -->
+                  <div class="form-group mb-3">
+                    <label for="data-nascita" class="form-label"
+                      >Data di nascita *</label
+                    >
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="data-nascita"
+                      required=""
+                    />
+                    <small class="form-text text-muted"
+                      >Inserisci la tua data di nascita</small
+                    >
+                  </div>
+
+                  <!-- Fumatore -->
+                  <div class="form-check mb-3">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      id="fumatore"
+                    />
+                    <label class="form-check-label" for="fumatore"
+                      >Fumatore</label
+                    >
+                    <small class="d-block form-text text-muted"
+                      >Seleziona se sei un fumatore</small
+                    >
+                  </div>
+
+                  <!-- Durata -->
+                  <div class="form-group mb-3">
+                    <label for="durata" class="form-label"
+                      >Durata (anni) *</label
+                    >
+                    <select class="form-select" id="durata" required="">
+                      <option value="" disabled="" selected="">
+                        Seleziona la durata
+                      </option>
+                      <option value="5">5 anni</option>
+                      <option value="10">10 anni</option>
+                      <option value="15">15 anni</option>
+                      <option value="20">20 anni</option>
+                      <option value="25">25 anni</option>
+                      <option value="30">30 anni</option>
+                    </select>
+                    <small class="form-text text-muted"
+                      >Seleziona la durata della copertura assicurativa</small
+                    >
+                  </div>
+
+                  <!-- Copertura -->
+                  <div class="form-group mb-3">
+                    <label for="copertura" class="form-label"
+                      >Copertura (CHF) *</label
+                    >
+                    <div class="input-group">
+                      <input
+                        type="number"
+                        class="form-control"
+                        id="copertura"
+                        min="10000"
+                        max="1000000"
+                        step="10000"
+                        value="100000"
+                        required=""
+                      />
+                      <span class="input-group-text">CHF</span>
+                    </div>
+                    <small class="form-text text-muted"
+                      >Importo della copertura assicurativa (minimo 10.000
+                      CHF)</small
+                    >
+                  </div>
+
+                  <!-- Dati fisici: Altezza e Peso (opzionali) -->
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="altezza" class="form-label"
+                          >Altezza (cm)</label
+                        >
+                        <div class="input-group">
+                          <input
+                            type="number"
+                            class="form-control"
+                            id="altezza"
+                            min="100"
+                            max="250"
+                            placeholder="Es. 175"
+                          />
+                          <span class="input-group-text">cm</span>
+                        </div>
+                        <small class="form-text text-muted">Opzionale</small>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="peso" class="form-label">Peso (kg)</label>
+                        <div class="input-group">
+                          <input
+                            type="number"
+                            class="form-control"
+                            id="peso"
+                            min="30"
+                            max="200"
+                            placeholder="Es. 70"
+                          />
+                          <span class="input-group-text">kg</span>
+                        </div>
+                        <small class="form-text text-muted">Opzionale</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Pulsante Calcola -->
+                  <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                      Calcola premio
+                    </button>
+                  </div>
+                </form>
+
+                <!-- Area risultati (inizialmente vuota) -->
+                <div id="risultato-premio" class="mt-4 p-3 d-none">
+                  <!-- I risultati verranno inseriti qui via JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+    <!-- <script type="module" src="/src/main.js"></script> -->
+    <script src="assets/js/api-handler.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const formPremio = document.getElementById("form-calcolo-premio");
+        const risultatoPremio = document.getElementById("risultato-premio");
+
+        formPremio.addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          // Mostra indicatore di caricamento
+          risultatoPremio.innerHTML = "Calcolo in corso...";
+
+          // Raccogli dati dal form
+          const dati = {
+            dataNascita: document.getElementById("data-nascita").value,
+            fumatore: document.getElementById("fumatore").checked,
+            durata: document.getElementById("durata").value,
+            copertura: document.getElementById("copertura").value,
+            altezza: document.getElementById("altezza").value,
+            peso: document.getElementById("peso").value,
+          };
+
+          // Chiama l'API
+          const risultato = await calcolaPremio(dati);
+
+          // Mostra il risultato
+          if (risultato.errore) {
+            risultatoPremio.innerHTML = `<div class="alert alert-danger">Errore: ${risultato.errore}</div>`;
+          } else {
+            // Estrai il premio dalla risposta
+            const premio = risultato.premium[0].yearly_gross_premium;
+            risultatoPremio.innerHTML = `
+                      <div class="alert alert-success">
+                          <h4>Premio annuale: ${premio} ${risultato.currency}</h4>
+                      </div>
+                      <button id="richiedi-offerta" class="btn btn-primary">Richiedi offerta</button>
+                  `;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
