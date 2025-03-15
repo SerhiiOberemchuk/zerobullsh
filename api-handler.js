@@ -1,4 +1,5 @@
-const API_BASE_URL = "https://test-mobirise-api.onrender.com";
+// const API_BASE_URL = "https://test-mobirise-api.onrender.com";
+const API_BASE_URL = "https://test-mobirise-api.fly.dev";
 
 async function testConnectionToAPI() {
   try {
