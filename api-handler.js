@@ -38,8 +38,6 @@ async function calcolaPremio(dati) {
       smoker: dati.fumatore,
       duration: parseInt(dati.durata),
       coverage: parseInt(dati.copertura),
-      height: parseInt(dati.altezza) || "",
-      weight: parseInt(dati.peso) || "",
     };
 
     if (dati.altezza) {
