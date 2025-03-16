@@ -1,11 +1,24 @@
-const API_BASE_URL = "https://test-mobirise-api.fly.dev";
+// Configurazione API
+const API_BASE_URL = "https://www.zerobullsh.it/LifeInsure/proxy.php"; // URL di test dell'API
+const API_KEY = "yra9qc9WffYaEsKlib8IrQwc2GRLdUCEJIzOo4uTfyc"; // API key ufficiale dalla documentazione
 
+// Funzione di test di connessione all'API
 async function testConnectionToAPI() {
   try {
     console.log("Tentativo di test connessione API...");
-    const testResponse = await fetch(`${API_BASE_URL}/test`, {
-      method: "GET",
-    });
+    console.log("API_BASE_URL:", API_BASE_URL);
+    console.log("API_KEY esiste:", !!API_KEY);
+
+    // Usa una richiesta GET di base per testare la connettivit�
+    const testResponse = await fetch(
+      `${API_BASE_URL}/squarelife_protection/api/v0/switzerland/life_insurance/premium`,
+      {
+        method: "OPTIONS",
+        headers: {
+          "X-SQUARELIFE-APIKEY": API_KEY,
+        },
+      }
+    );
     console.log("Test di connessione riuscito:", testResponse.status);
     return true;
   } catch (error) {
@@ -14,10 +27,15 @@ async function testConnectionToAPI() {
   }
 }
 
+// Funzione principale di calcolo premio
 async function calcolaPremio(dati) {
   console.log("Funzione calcolaPremio chiamata con dati:", dati);
+
   try {
+    // Esegui test di connessione prima di procedere
     await testConnectionToAPI();
+
+    // Formatta data di nascita nel formato richiesto dall'API (YYYYMMDD)
     const dataNascita = new Date(dati.dataNascita);
     const birthdate = parseInt(
       dataNascita.getFullYear().toString() +
@@ -25,6 +43,7 @@ async function calcolaPremio(dati) {
         dataNascita.getDate().toString().padStart(2, "0")
     );
 
+    // Data attuale per origin (formato YYYYMMDD)
     const oggi = new Date();
     const origin = parseInt(
       oggi.getFullYear().toString() +
@@ -32,6 +51,7 @@ async function calcolaPremio(dati) {
         oggi.getDate().toString().padStart(2, "0")
     );
 
+    // Costruisci l'oggetto dati per l'API secondo la documentazione
     const datiAPI = {
       origin: origin,
       birthdate: birthdate,
@@ -40,6 +60,7 @@ async function calcolaPremio(dati) {
       coverage: parseInt(dati.copertura),
     };
 
+    // Aggiungi altezza e peso se forniti
     if (dati.altezza) {
       datiAPI.height = parseInt(dati.altezza);
     }
@@ -48,13 +69,29 @@ async function calcolaPremio(dati) {
       datiAPI.weight = parseInt(dati.peso);
     }
 
-    console.log("Tentativo di chiamata fetch...");
-    const risposta = await fetch(`${API_BASE_URL}/premium`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datiAPI),
-    });
+    console.log("Dati formattati per l'API:", datiAPI);
+    console.log(
+      "URL completo:",
+      `${API_BASE_URL}/squarelife_protection/api/v0/switzerland/life_insurance/premium`
+    );
 
+    // Effettua la chiamata API con gestione errori migliorata
+    console.log("Tentativo di chiamata fetch...");
+    const risposta = await fetch(
+      `${API_BASE_URL}/squarelife_protection/api/v0/switzerland/life_insurance/premium`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-SQUARELIFE-APIKEY": API_KEY,
+        },
+        body: JSON.stringify(datiAPI),
+      }
+    );
+
+    console.log("Risposta ricevuta con status:", risposta.status);
+
+    // Verifica lo stato della risposta
     if (!risposta.ok) {
       const erroreRisposta = await risposta.text();
       console.error("Errore API:", risposta.status, erroreRisposta);
@@ -62,106 +99,21 @@ async function calcolaPremio(dati) {
         errore: `Errore dal server API (${risposta.status}): ${erroreRisposta}`,
       };
     }
+
+    // Gestisci la risposta
     const datiRisposta = await risposta.json();
+    console.log("Dati risposta API:", datiRisposta);
+
     return datiRisposta;
   } catch (errore) {
     console.error("Errore nel calcolo del premio:", errore);
     return {
-      errore: `Si è verificato un errore durante la chiamata all'API: ${errore.message}`,
+      errore: `Si � verificato un errore durante la chiamata all'API: ${errore.message}`,
     };
   }
 }
 
-async function richiediOfferta(dati) {
-  try {
-    // Prepara i dati per l'API (esempio semplificato)
-    const datiOfferta = {
-      id: dati.id,
-      holder: {
-        firstname: dati.nome,
-        lastname: dati.cognome,
-        street: dati.indirizzo,
-        zip: dati.cap,
-        city: dati.citta,
-        country: dati.paese,
-        email: dati.email,
-        birthdate: dati.dataNascita.replace(/-/g, ""),
-        profession: dati.professione,
-        gender: dati.genere,
-      },
-      beneficiaries: {
-        type: "legal",
-      },
-      policy_information: {
-        tariff: "protection_retail",
-        origin: new Date().toISOString().slice(0, 10).replace(/-/g, ""),
-        duration: parseInt(dati.durata),
-        coverage: parseInt(dati.copertura),
-        accident_coverage: 0,
-        general_condition: 20201101,
-        mode: dati.modalitaPagamento || "annual",
-        smoker: dati.fumatore,
-        height: parseInt(dati.altezza),
-        weight: parseInt(dati.peso),
-      },
-      payment_type: "invoice_esr",
-      health_questions: [],
-      other_underwriting: {
-        privacy_questions: [],
-      },
-    };
-
-    // Effettua la chiamata API
-    const risposta = await fetch(`${API_BASE_URL}/offer`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(datiOfferta),
-    });
-
-    if (!risposta.ok) {
-      throw new Error("Errore nella richiesta dell'offerta");
-    }
-
-    return await risposta.json();
-  } catch (errore) {
-    console.error("Errore nella richiesta dell'offerta:", errore);
-    return { errore: errore.message };
-  }
-}
-
-// Funzione per emettere una polizza
-async function emettiPolizza(id) {
-  try {
-    const datiEmissione = {
-      id: id,
-    };
-
-    const risposta = await fetch(`${API_BASE_URL}/application`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(datiEmissione),
-    });
-
-    if (!risposta.ok) {
-      throw new Error("Errore nell'emissione della polizza");
-    }
-
-    return await risposta.json();
-  } catch (errore) {
-    console.error("Errore nell'emissione della polizza:", errore);
-    return { errore: errore.message };
-  }
-}
-
-// Funzione per recuperare un documento
-function recuperaDocumento(documentPointer) {
-  return `${API_BASE_URL}/document_pointer/${documentPointer}`;
-}
-
+// Esegui il test di connessione all'avvio per verificare la configurazione
 document.addEventListener("DOMContentLoaded", function () {
   console.log("API handler caricato. Esecuzione test connessione...");
   testConnectionToAPI();
